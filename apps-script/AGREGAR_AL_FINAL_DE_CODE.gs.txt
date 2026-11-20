@@ -1,0 +1,29 @@
+
+// Agregar al final del Code.gs existente. No ejecutar instalar_ nuevamente.
+function doPost(e) {
+  try {
+    const raw=e && e.postData && e.postData.contents;
+    if (!raw || raw.length>300000) throw Error('Solicitud inválida.');
+    const req=JSON.parse(raw);
+    const a=req.args;
+    if (!Array.isArray(a)) throw Error('Argumentos inválidos.');
+    let result;
+    switch(req.action){
+      case 'estado':
+        if(a.length!==0) throw Error('Argumentos inválidos.');
+        if(hoja_().getRange(1,1,1,HEAD.length).getDisplayValues()[0].join('|')!==HEAD.join('|')) throw Error('Planilla no configurada correctamente.');
+        if((PropertiesService.getScriptProperties().getProperty(CFG.password)||'').length<16) throw Error('Configurar CLAVE_DOCENTE.');
+        result={servicio:'sujetos-172',conectado:true}; break;
+      case 'entregar': if(a.length!==1) throw Error('Argumentos inválidos.'); result=entregar(a[0]); break;
+      case 'login': if(a.length!==1) throw Error('Argumentos inválidos.'); result=login(a[0]); break;
+      case 'listar': if(a.length!==1) throw Error('Argumentos inválidos.'); result=listar(a[0]); break;
+      case 'guardarAsignacion': if(a.length!==2) throw Error('Argumentos inválidos.'); result=guardarAsignacion(a[0],a[1]); break;
+      case 'salir': if(a.length!==1) throw Error('Argumentos inválidos.'); salir(a[0]); result=true; break;
+      default: throw Error('Operación no permitida.');
+    }
+    return respuestaNetlify_({ok:true,result:result});
+  } catch (err) {
+    return respuestaNetlify_({ok:false,error:String(err && err.message || 'No se pudo procesar la solicitud.').slice(0,500)});
+  }
+}
+function respuestaNetlify_(obj){return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);}

@@ -1,0 +1,11 @@
+SUJETOS DE LA EDUCACIÓN SECUNDARIA — PUBLICACIÓN EN NETLIFY
+
+1. Apps Script: abrí el proyecto existente. Pegá el contenido de apps-script/AGREGAR_AL_FINAL_DE_CODE.gs.txt AL FINAL de Code.gs (sin borrar nada). Guardá. Implementar > Gestionar implementaciones > lápiz > Nueva versión > Implementar. Ejecutar como yo; acceso cualquier persona. No ejecutar instalar_ otra vez. No tocar Index.html ni CLAVE_DOCENTE.
+
+2. Descomprimí el ZIP. Creá un repositorio privado de GitHub. Subí el CONTENIDO de la carpeta Sujetos_Netlify (public, netlify, apps-script, netlify.toml, LEEME.txt) a la raíz del repositorio. No subas el ZIP como archivo. Conservá las carpetas.
+
+3. En Netlify: Add new project > Import an existing project > GitHub > elegí el repositorio. Branch main (o la rama que uses), Base directory vacía, Build command vacío, Publish directory public, Functions directory netlify/functions. netlify.toml ya fija los dos directorios. Deploy. No uses el arrastre de archivos de Netlify Drop, porque no despliega esta función.
+
+4. Abrí https://TU-SITIO.netlify.app/.netlify/functions/bridge. Debe mostrar {"ok":true,"result":{"servicio":"sujetos-172","conectado":true}}. Hacé una entrega de prueba completa y verificá su aparición en la planilla. Ingresá al panel docente y verificá que podés leerla. Recién entonces compartí el sitio con los alumnos. Si falla, el /exec original sigue siendo una alternativa para recibir trabajos.
+
+No hay claves en el ZIP. La contraseña y las respuestas permanecen en Google. Los borradores se guardan en el navegador y no migran automáticamente entre dominios. Las pruebas locales no sustituyen la prueba real en Netlify.
