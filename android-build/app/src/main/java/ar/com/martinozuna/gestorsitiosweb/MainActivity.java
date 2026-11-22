@@ -6,6 +6,10 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Insets;
+import android.view.WindowInsets;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -37,11 +41,39 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(20,42,49));
         getWindow().setNavigationBarColor(Color.rgb(20,42,49));
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(20,42,49));
         web = new WebView(this);
-        setContentView(web);
+        root.addView(web, new FrameLayout.LayoutParams(-1,-1));
+        setContentView(root);
+        // Android 15/16: mantener toda la interfaz fuera de la barra de estado
+        // y de los controles de navegación del sistema.
+        if (Build.VERSION.SDK_INT >= 35) {
+            root.setOnApplyWindowInsetsListener((v, insets) -> {
+                Insets safe = insets.getInsets(
+                    WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars()
+                );
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) web.getLayoutParams();
+                if (lp.topMargin != safe.top || lp.bottomMargin != safe.bottom) {
+                    lp.topMargin = safe.top;
+                    lp.bottomMargin = safe.bottom;
+                    web.setLayoutParams(lp);
+                }
+                return insets;
+            });
+            root.requestApplyInsets();
+        }
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
+        // Tamaño de lectura y viewport adaptados a pantallas móviles pequeñas.
+        s.setUseWideViewPort(true);
+        s.setLoadWithOverviewMode(true);
+        s.setTextZoom(85);
+        s.setSupportZoom(true);
+        s.setBuiltInZoomControls(true);
+        s.setDisplayZoomControls(false);
+        web.setInitialScale(90);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
         s.setSupportMultipleWindows(true);
         s.setAllowFileAccess(false);
@@ -51,6 +83,13 @@ public final class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
         web.addJavascriptInterface(new Saver(),"GestorAndroid");
         web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                Uri address = Uri.parse(url);
+                if ("https".equalsIgnoreCase(address.getScheme()) &&
+                    HOST.equalsIgnoreCase(address.getHost())) {
+                    view.evaluateJavascript("(() => {const id='gestor-android-ajustes';if(document.getElementById(id))return;const style=document.createElement('style');style.id=id;style.textContent=\"#nl-badge-frame,iframe#nl-badge-frame{display:none!important;visibility:hidden!important;pointer-events:none!important;}\\n@media (max-width: 720px) {\\n html,body {max-width:100%!important;overflow-x:hidden!important;}\\n .login-card {max-width:100%!important;padding:24px 22px!important;}\\n .login h1 {font-size:25px!important;line-height:1.15!important;}\\n .login .login-signature {font-size:15px!important;}\\n .login-card .muted {font-size:15px!important;}\\n .login-card form {margin-top:16px!important;}\\n .login-card .field {margin-bottom:12px!important;}\\n .login-card label {font-size:15px!important;}\\n .login-card input {font-size:16px!important;min-height:42px!important;}\\n .login-card .btn {font-size:16px!important;min-height:42px!important;}\\n .topbar {padding:12px 14px!important;gap:8px 12px!important;}\\n .topbar .brand {gap:10px!important;}\\n .topbar .brand-title {font-size:21px!important;line-height:1.14!important;white-space:normal!important;}\\n .topbar .brand-byline {font-size:15px!important;}\\n .topbar .brand-symbol {width:39px!important;height:39px!important;font-size:22px!important;}\\n #greeting {font-size:17px!important;}\\n .topbar .btn,.top-actions .btn {font-size:15px!important;min-height:40px!important;padding:8px 10px!important;}\\n .top-actions {gap:5px!important;}\\n .sidebar button {font-size:15px!important;min-height:40px!important;padding:8px 9px!important;gap:6px!important;}\\n .sidebar {gap:4px!important;}\\n .form-panel {padding:17px 15px!important;}\\n .panel-head h2,.modal h2 {font-size:22px!important;}\\n .panel-box h3,.subheading {font-size:18px!important;}\\n .form-panel label {font-size:15px!important;}\\n .form-panel input,.form-panel select,.form-panel textarea {font-size:16px!important;}\\n .form-panel .btn,.help-trigger {font-size:15px!important;min-height:41px!important;padding:8px 10px!important;}\\n .preview-bar strong {font-size:16px!important;}\\n .device button {font-size:15px!important;min-height:38px!important;}\\n .note,.image-spec,.small,.panel-head p {font-size:14px!important;}\\n}\";(document.head||document.documentElement).appendChild(style);})()",null);
+                }
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (allowed(request.getUrl())) return false;
                 external(request.getUrl());
